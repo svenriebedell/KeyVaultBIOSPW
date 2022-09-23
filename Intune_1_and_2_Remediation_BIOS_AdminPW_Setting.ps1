@@ -22,6 +22,7 @@ limitations under the License.
 
 1.0.1   Switch of BIOS Setting by Dell Command | Monitor to WMI agentless
 1.0.2   Add new RegKey for date of update will be written to registry
+1.1.0   Add read/write BIOS PW to MS KeyVault
 
 #>
 
@@ -38,7 +39,7 @@ limitations under the License.
 
 
 #Variable for change
-$PWKey = "Dell2022" #Sure-Key of AdminPW
+$PWKey = "Dell2022008" #Sure-Key of AdminPW
 $PWTime = "180" # Days a password need exist before it will be change
 
 
@@ -47,7 +48,7 @@ $PWTime = "180" # Days a password need exist before it will be change
 $PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
 $DateTransfer = (Get-Date).AddDays($PWTime)
 $PWstatus = ""
-#$DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
+$DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
 $serviceTag = Get-CimInstance -ClassName win32_bios | Select-Object -ExpandProperty SerialNumber
 $AdminPw = "$serviceTag$PWKey"
 $Date = Get-Date
@@ -73,10 +74,18 @@ $SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Clas
 
 if ($RegKeyexist -eq "True")
     {
-    $PWKeyOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | Select-Object -ExpandProperty BIOS
-    $serviceTagOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | Select-Object -ExpandProperty ServiceTag
-    $AdminPwOld = "$serviceTagOld$PWKeyOld"
+    #$PWKeyOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name BIOS | Select-Object -ExpandProperty BIOS
+    #$serviceTagOld = Get-ItemProperty -Path 'HKLM:\SOFTWARE\Dell\BIOS\' -Name ServiceTag | Select-Object -ExpandProperty ServiceTag
     
+
+    ########################################################
+    #              Writing BIOS PW to KeyVault             #
+    ########################################################
+
+    $secret = (Get-AzKeyVaultSecret -vaultName "PWDBIOS" -name $DeviceName) | select *
+    $Get_My_Scret = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret.SecretValue) 
+    $AdminPwOld = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Get_My_Scret) 
+        
     Write-Output "RegKey exist"  | out-file "$PATH\BIOS_Profile.txt" -Append
 
     # Encoding BIOS Password
@@ -118,6 +127,13 @@ If ($PWset -eq $false)
         
         Write-Output "Password is set successful for first time"  | out-file "$PATH\BIOS_Profile.txt" -Append
         
+        ########################################################
+        #              Writing BIOS PW to KeyVault             #
+        ########################################################
+
+        $securevalue = ConvertTo-SecureString $AdminPw -AsPlainText -Force
+        $secret =  Set-AzKeyVaultSecret -VaultName "pwdbios" -Name $DeviceName -SecretValue $securevalue
+        
         Exit 0
         }
 
@@ -152,7 +168,7 @@ else
         }
 
     #Old and new AdminPW are different make AdminPW change
-
+    
     else
         {
         
