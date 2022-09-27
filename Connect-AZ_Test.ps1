@@ -1,13 +1,19 @@
-﻿#$azureAppId = '9bd11b68-222e-4a0f-941a-a12345c3957d'
- #$azureAppIdPassword = ConvertTo-SecureString 'CGZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
- #$azureAppCred = (New-Object System.Management.Automation.PSCredential ($azureAppId, $azureAppIdPassword))
- $subscriptionId = '124636a2-a349-4c59-b0b3-6769ed6dc6f9'
- $tenantId = '0d02d0b5-802d-427e-abc8-5166348b7f1f'
- Connect-AzAccount -ServicePrincipal -SubscriptionId $subscriptionId -TenantId $tenantId -Credential $azureAppCred
+﻿# Requires Module Az
 
- $password = ConvertTo-SecureString 'CGZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX' -AsPlainText -Force
- $credential = New-Object System.Management.Automation.PSCredential ('9bd11b68-222e-4a0f-941a-a12345c3957d', $password)
+Disable-AzContextAutosave
 
- Connect-AzAccount -Credential $credential -ServicePrincipal
+$Tenant = '0d02d0b5-802d-427e-abc8-5166348b7f1f'
+$ApplicationId = '9bd11b68-222e-4a0f-941a-a12345c3957d'
+$Secret = 'GZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
+$VaultName = 'key-vault-name'
 
- Connect-AzAccount -ServicePrincipal -SubscriptionId $subscriptionId -TenantId $tenantId -Credential $credential
+# Authenticate against Azure
+[SecureString]$pwd = ConvertTo-SecureString $Secret -AsPlainText -Force
+[PSCredential]$Credential = New-Object System.Management.Automation.PSCredential ($ApplicationId, $pwd)
+Connect-AzAccount -Credential $Credential -Tenant $Tenant -ServicePrincipal
+
+# Now we can get secrets. 
+$secret = (Get-AzKeyVaultSecret -vaultName "PWDBIOS" -name "SRLAB-1X752J3") | select *
+$Get_My_Scret = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret.SecretValue) 
+$Display_My_Secret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Get_My_Scret) 
+$Display_My_Secret
