@@ -54,7 +54,7 @@ $Secret = 'GZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
 $DeviceName = (Get-CimInstance -ClassName Win32_ComputerSystem).Name
 $DateBIOSset = ""
 $BIOSPWrenewal = "180" # Value of days before BIOS PWD need to be changed
-$PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
+#$PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
 $DateTransfer = (Get-Date).AddDays($PWTime)
 $PWstatus = ""
 $DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
@@ -105,6 +105,7 @@ $Display_My_Secret
 
 ############################
 #### Password set check ####
+############################
 
 function AdminPWD-Check
     {
@@ -115,11 +116,14 @@ function AdminPWD-Check
     # Check AdminPWD status 0 = no PWD is set / 1 = PWD is set
     $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$AdminPw) | Select-Object -ExpandProperty Status
 
-    return
+    return $PWset
 
     }
+
 #############################
 #### Password randomizer ####
+#############################
+
 
 # This function is from https://gist.github.com/indented-automation/2093bd088d59b362ec2a5b81a14ba84e
 function New-Password {
@@ -217,31 +221,48 @@ One of the following special characters (ASCII 0x7b – 0x7e):
 
 ########################################
 #### Test Registry Path/Value exist ####
+########################################
 
 # this function is from https://stackoverflow.com/questions/5648931/test-if-registry-value-exists
 
-function Test-RegistryValue {
+function Test-RegistryValue 
+    {
 
-param (
+    param 
+        (
 
- [parameter(Mandatory=$true)]
- [ValidateNotNullOrEmpty()]$Path,
+         [parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]$Path,
 
-[parameter(Mandatory=$true)]
- [ValidateNotNullOrEmpty()]$Value
-)
+        [parameter(Mandatory=$true)]
+         [ValidateNotNullOrEmpty()]$Value
+        )
 
-try {
+    try
+        {
 
-Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop | Out-Null
- return $true
- }
+        Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop | Out-Null
+        return $true
 
-catch {
+        }
 
-return $false
+    catch
+        {
 
-}
+        return $false
 
-}
+        }
 
+    }
+
+
+
+#############################################################################
+# Program section                                                           #
+#############################################################################
+
+########################################
+#### Check if BIOS Admin PWD is set ####
+########################################
+
+AdminPWD-Check
