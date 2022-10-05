@@ -261,7 +261,7 @@ Function write-KeyVaultPWD
         )
 
     $securevalue = ConvertTo-SecureString $Password -AsPlainText -Force
-    $secret =  Set-AzureKeyVaultSecret -VaultName "pwdbios" -Name $serviceTag -SecretValue $securevalue
+    $secret =  Set-AzKeyVaultSecret -VaultName "pwdbios" -Name $DeviceName -SecretValue $securevalue
 
     }
 
@@ -547,7 +547,7 @@ if ($PWset[0] -eq 0)
         
 
         
-    If($PWstatus -eq 0)
+    If($PWstatus[0] -eq 0)
         {
 
         # report success to MS Event Viewer
