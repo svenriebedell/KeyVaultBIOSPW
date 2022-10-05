@@ -185,6 +185,14 @@ else
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $PWKey -type string -Force
             New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "Update" -value (Get-Date $DateTransfer -Format yyyy-MM-dd) -type string -Force
 
+
+            ########################################################
+            #              Writing BIOS PW to KeyVault             #
+            ########################################################
+
+            $securevalue = ConvertTo-SecureString $AdminPw -AsPlainText -Force
+            $secret =  Set-AzKeyVaultSecret -VaultName "pwdbios" -Name $DeviceName -SecretValue $securevalue
+        
             Exit 0
 
             }
