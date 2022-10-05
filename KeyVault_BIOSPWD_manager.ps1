@@ -36,9 +36,14 @@ limitations under the License.
 #>
 
 
+#############################################################################
+#############################################################################
+# Variables section                                                         #
+#############################################################################
+#############################################################################
 
 #############################################################################
-# Connect informations                                                      #
+# Connect informations for Azure Authentification                           #
 #############################################################################
 
 # Tenant, Application-ID and Secure-Value
@@ -47,61 +52,219 @@ $ApplicationId = '9bd11b68-222e-4a0f-941a-a12345c3957d'
 $Secret = 'GZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
 
 #############################################################################
-# device informations                                                      #
+# device informations                                                       #
 #############################################################################
 
-#Device Data
 $DeviceName = (Get-CimInstance -ClassName Win32_ComputerSystem).Name
-$DateBIOSset = ""
-$BIOSPWrenewal = "180" # Value of days before BIOS PWD need to be changed
-#$PWset = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
-$DateTransfer = (Get-Date).AddDays($PWTime)
-$PWstatus = ""
-$DeviceName = Get-CimInstance -ClassName win32_computersystem | select -ExpandProperty Name
-$serviceTag = Get-CimInstance -ClassName win32_bios | Select-Object -ExpandProperty SerialNumber
-$AdminPw = "$serviceTag$PWKey"
+$serviceTag = (Get-CimInstance -ClassName Win32_BIOS).SerialNumber
+
+
+#############################################################################
+# Environment Variables                                                     #
+#############################################################################
 $Date = Get-Date
-$PWKeyOld = ""
-$serviceTagOld = ""
-$AdminPwOld = ""
-$PATH = "C:\Temp\"
-$PWKey = "Dell2022008" #Sure-Key of AdminPW
 
 #############################################################################
-# enable or disable randomized password                                     #
+# Option Randmized PWD Function                                             #
 #############################################################################
 
-$PasswordGenerator = False # Value true the password generator generate a randomize password Value false password = ServiceTag +GenericValue
+# Value true the password generator generate a randomize password
+$PasswordGenerator = $False #$True/$False
+$PWLength = 8 # lenght of your randomized Password
+
+####################################################################################
+# Variables for KeyVault PW PreShared Key works only if $PasswordGenerator = False #
+####################################################################################
+
+#Name of the Secret in KeyVault which incl. the Static Part of BIOS PWD
+$KeyVaultPreShared = "0-PreSharedKey"
+
+############################################################################
+# required versions for PowerShell Modules                                 #
+############################################################################
+
+[Version]$PowerShellGetVersion = "2.2.5"
+[Version]$AzKeyVaultVersion = "4.7.0"
+[Version]$AzAccountsVersion = "2.10.1"
 
 
 #############################################################################
-# Prepraparations                                                           #
-#############################################################################
-
-Install-Module AZ -Force
-Disable-AzContextAutosave
-
-#############################################################################
-# Connect KeyVault                                                          #
-#############################################################################
-
-[SecureString]$pwd = ConvertTo-SecureString $Secret -AsPlainText -Force
-[PSCredential]$Credential = New-Object System.Management.Automation.PSCredential ($ApplicationId, $pwd)
-Connect-AzAccount -Credential $Credential -Tenant $Tenant -ServicePrincipal
-
-#############################################################################
-# Check BIOS PWD for Device                                                 #
-#############################################################################
-
-$secret = (Get-AzKeyVaultSecret -vaultName "PWDBIOS" -name "SRLAB-1X752J3") | select *
-$Get_My_Scret = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret.SecretValue) 
-$Display_My_Secret = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Get_My_Scret) 
-$Display_My_Secret
-
-
 #############################################################################
 # Function section                                                          #
 #############################################################################
+#############################################################################
+
+##################################################
+#### Check install missing PowerShell Modules ####
+##################################################
+
+Function Check-Module
+    {
+    param
+        (
+        
+        [string]$ModuleName,
+        [Version]$ModuleVersion
+
+        )
+    
+
+    ########################################
+    #### Check if Module Name exist     ####
+    ########################################
+    
+    $ModuleNameCheck = Get-InstalledModule -Name $ModuleName -ErrorAction Ignore
+
+    If($Null -eq $ModuleNameCheck)
+        {
+        
+        switch ($ModuleName)
+            {
+                Az.Accounts {'AZ'}
+                Az.KeyVault {'AZ'}
+                PowerShellGet {'PowerShellGet'}
+
+            }
+
+        Install-Module -Name $ModuleName -Force -AllowClobber
+
+        $ModuleCheck = Get-InstalledModule -Name $ModuleName | Where-Object{$_.Version -ge "$ModuleVersion"} | Select-Object -ExpandProperty Name
+
+        
+
+        If($null-eq $ModuleCheck)
+            {
+
+            Write-EventLog -LogName "Dell BIOS" -EventId 11 -EntryType Error -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName failed to install"
+
+            }
+
+        Else
+            {
+
+            Write-EventLog -LogName "Dell BIOS" -EventId 00 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is successfull installed"
+
+            }
+        }
+
+    
+    Else
+        {  
+     
+        $ModuleCheck = Get-InstalledModule -Name $ModuleName | Where-Object{$_.Version -ge "$ModuleVersion"} | Select-Object -ExpandProperty Name -ErrorAction Ignore
+
+        switch ($ModuleName)
+            {
+                Az.Accounts {'AZ'}
+                Az.KeyVault {'AZ'}
+                PowerShellGet {'PowerShellGet'}
+
+            }
+
+
+        If($null-eq $ModuleCheck)
+            {
+
+            Install-Module -Name $ModuleName -Force -AllowClobber
+
+            $ModuleCheck = Get-InstalledModule -Name $ModuleName | Where-Object{$_.Version -ge "$ModuleVersion"} | Select-Object -ExpandProperty Name
+
+        
+
+            If($null-eq $ModuleCheck)
+                {
+
+                Write-EventLog -LogName "Dell BIOS" -EventId 11 -EntryType Error -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName failed to install"
+
+                }
+
+            Else
+                {
+
+                $AttributStringValue = "is installed"
+                Write-EventLog -LogName "Dell BIOS" -EventId 00 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is successfull installed"
+
+                }
+
+      
+            }
+
+        Else
+            {
+
+            Write-EventLog -LogName "Dell BIOS" -EventId 01 -EntryType Information -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is still existing"
+
+            }
+        }
+   
+    }
+
+
+
+##################################
+#### Connect to KeyVault      ####
+##################################
+
+Function Connect-KeyVaultPWD
+    {
+
+    #############################################################################
+    # Connect KeyVault                                                          #
+    #############################################################################
+
+    [SecureString]$pwd = ConvertTo-SecureString $Secret -AsPlainText -Force
+    [PSCredential]$Credential = New-Object System.Management.Automation.PSCredential ($ApplicationId, $pwd)
+    Connect-AzAccount -Credential $Credential -Tenant $Tenant -ServicePrincipal  
+
+    }
+
+
+##################################
+#### Request KeyVault BIOSPWD ####
+##################################
+
+Function get-KeyVaultPWD
+    {
+
+    Param
+        (
+
+        [string]$KeyName
+
+        )
+
+    #############################################################################
+    # Check BIOS PWD for Device or PreSharedKey                                 #
+    #############################################################################
+
+    $secret = (Get-AzKeyVaultSecret -vaultName "PWDBIOS" -name $KeyName) | select *
+    $Get_My_Scret = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret.SecretValue) 
+    $KeyPWD = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Get_My_Scret)  
+       
+    Return $KeyPWD   
+
+    }
+
+
+##################################
+#### Request KeyVault BIOSPWD ####
+##################################
+
+Function write-KeyVaultPWD
+    {
+
+    Param
+        (
+
+        [string]$Password
+
+        )
+
+    $securevalue = ConvertTo-SecureString $Password -AsPlainText -Force
+    $secret =  Set-AzureKeyVaultSecret -VaultName "pwdbios" -Name $serviceTag -SecretValue $securevalue
+
+    }
+
 
 ############################
 #### Password set check ####
@@ -110,15 +273,105 @@ $Display_My_Secret
 function AdminPWD-Check
     {
 
+    # Check AdminPWD status 0 = no PWD is set / 1 = PWD is set
+    $PWstatus = Get-CimInstance -Namespace root/dcim/sysman/wmisecurity -ClassName PasswordObject -Filter "NameId='Admin'" | Select-Object -ExpandProperty IsPasswordSet
+
+    Switch ($PWstatus)
+        {
+
+            0 {$AttributStringValue = 'disabled'}
+            1 {$AttributStringValue = 'enabled'}
+
+        }
+    
+    return $PWstatus,$AttributStringValue
+    
+    }
+
+
+###################################
+#### Password set new AdminPWD ####
+###################################
+
+function AdminPWD-setnew
+    {
+
+    param
+        (
+
+        [string]$Password
+
+        )
+
+
     # Connect to the SecurityInterface WMI class
     $SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface
 
-    # Check AdminPWD status 0 = no PWD is set / 1 = PWD is set
-    $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$AdminPw) | Select-Object -ExpandProperty Status
+    # Set AdminPW and get result
+    $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$Password) | Select-Object -ExpandProperty Status
 
-    return $PWset
+    Switch ($PWstatus)
+        {
+
+            0 {$result = "Success"}
+            1 {$result = "Failed"}
+            2 {$result = "Invalid Parameter"}
+            3 {$result = 'Access Denied'}
+            4 {$result = 'Not Supported'}
+            5 {$result = 'Memory Error'}
+            6 {$result = 'Protocol Error'}
+
+        }
+    
+     return $PWstatus, $result
 
     }
+
+###################################
+#### Password change AdminPWD ####
+###################################
+
+function AdminPWD-change
+    {
+
+    param
+        (
+
+        [string]$Password,
+        [string]$PasswordOld
+
+        )
+
+
+    # Connect to the SecurityInterface WMI class
+    $SecurityInterface = Get-WmiObject -Namespace root\dcim\sysman\wmisecurity -Class SecurityInterface
+
+    # Change AdminPW and get result
+
+    # Encoding BIOS Password Old
+    $Encoder = New-Object System.Text.UTF8Encoding
+    $Bytes = $Encoder.GetBytes($PasswordOld)
+
+    $PWstatus = $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$Password,$PasswordOld) | Select-Object -ExpandProperty Status
+    
+    Switch ($PWstatus)
+        {
+
+            0 {$result = "Success"}
+            1 {$result = "Failed"}
+            2 {$result = "Invalid Parameter"}
+            3 {$result = 'Access Denied'}
+            4 {$result = 'Not Supported'}
+            5 {$result = 'Memory Error'}
+            6 {$result = 'Protocol Error'}
+
+        }
+    
+ 
+    return $PWstatus, $result
+
+    }
+
 
 #############################
 #### Password randomizer ####
@@ -134,7 +387,7 @@ function New-Password {
         # The length of the password which should be created.
         [Parameter(ValueFromPipeline)]        
         [ValidateRange(8, 255)]
-        [Int32]$Length = 10,
+        [Int32]$Length = $PWLength,
 
         # The character sets the password may contain. A password will contain at least one of each of the characters.
         [String[]]$CharacterSet = ('abcdefghijklmnopqrstuvwxyz',
@@ -219,50 +472,184 @@ One of the following special characters (ASCII 0x7b – 0x7e):
 }
 
 
-########################################
-#### Test Registry Path/Value exist ####
-########################################
-
-# this function is from https://stackoverflow.com/questions/5648931/test-if-registry-value-exists
-
-function Test-RegistryValue 
-    {
-
-    param 
-        (
-
-         [parameter(Mandatory=$true)]
-         [ValidateNotNullOrEmpty()]$Path,
-
-        [parameter(Mandatory=$true)]
-         [ValidateNotNullOrEmpty()]$Value
-        )
-
-    try
-        {
-
-        Get-ItemProperty -Path $Path | Select-Object -ExpandProperty $Value -ErrorAction Stop | Out-Null
-        return $true
-
-        }
-
-    catch
-        {
-
-        return $false
-
-        }
-
-    }
-
-
 
 #############################################################################
 # Program section                                                           #
 #############################################################################
 
 ########################################
+#### Start Logging                  ####
+########################################
+
+# setup LogID and Source for logging in MS Event Viewer
+New-EventLog -LogName "Dell BIOS" -Source "BIOS Password Manager" -ErrorAction Ignore
+
+
+########################################
+#### prepare PowerShell Environment ####
+########################################
+
+# AZ PowerShell Module
+$CheckPowerShellModule = Check-Module -ModuleName PowerShellGet -ModuleVersion $PowerShellGetVersion
+# AZ PowerShell Module
+$CheckPowerShellModule = Check-Module -ModuleName Az.Accounts -ModuleVersion $AzAccountsVersion
+$CheckPowerShellModule = Check-Module -ModuleName Az.KeyVault -ModuleVersion $AzKeyVaultVersion
+
+
+###############################################################
+#### disable store Az.Account informations in User Profile ####
+###############################################################
+
+Disable-AzContextAutosave
+
+
+########################################
 #### Check if BIOS Admin PWD is set ####
 ########################################
 
-AdminPWD-Check
+$PWset = AdminPWD-Check
+
+
+if ($PWset[0] -eq 0)
+    {
+    
+    #Report missing BIOS AdminPWD
+    Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType Error -Message "Error: Device $DeviceName has no AdminPWD"
+
+    ##############################################
+    #### Setup BIOS AdminPWD                  ####
+    ##############################################
+    
+    If($PasswordGenerator -eq $false)
+        {
+
+        # Connect to KeyVault
+        Connect-KeyVaultPWD
+
+        # Get PreShareKey for generate AdminPWD
+        $AdminPreSharedKeyPWD = get-KeyVaultPWD -KeyName $KeyVaultPreShared
+
+        $AdminPWDNew = $serviceTag+$AdminPreSharedKeyPWD
+
+        }
+    Else
+        {
+
+
+        $AdminPWDNew = New-Password
+
+
+        }
+
+    # Set AdminPWD to Device and return setup result
+    $PWstatus = AdminPWD-setnew -Password $AdminPWDNew
+
+        
+
+        
+    If($PWstatus -eq 0)
+        {
+
+        # report success to MS Event Viewer
+        Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
+
+        <#  0 {$result = "Success"}
+            1 {$result = "Failed"}
+            2 {$result = "Invalid Parameter"}
+            3 {$result = 'Access Denied'}
+            4 {$result = 'Not Supported'}
+            5 {$result = 'Memory Error'}
+            6 {$result = 'Protocol Error'} #>
+
+        write-KeyVaultPWD -Password $AdminPWDNew
+
+        }
+    Else
+        {
+
+        # report Error Code to MS Event Viewer
+        Write-EventLog -LogName "Dell BIOS" -EventId 11 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
+
+        }
+
+    # disconnect KeyVault connection
+    Disconnect-AzAccount
+    
+    }
+Else
+    {
+
+    ###################################################################
+    #### request Device BIOS PW from KeyVault or use PWD Generator ####
+    ###################################################################
+
+    If($PasswordGenerator -eq $false)
+        {
+
+        # Connect to KeyVault
+        Connect-KeyVaultPWD
+        $AdminKeyPWDCurrent = get-KeyVaultPWD -KeyName $DeviceName
+        $AdminKeyPWDPreShared = get-KeyVaultPWD -KeyName $KeyVaultPreShared
+        Disconnect-AzAccount
+
+        $AdminPWDNew = $serviceTag+$AdminKeyPWDPreShared
+
+        }
+    Else
+        {
+        Connect-KeyVaultPWD
+        $AdminKeyPWDCurrent = get-KeyVaultPWD -KeyName $DeviceName
+        Disconnect-AzAccount
+
+        $AdminPWDNew = New-Password
+
+
+        }
+
+
+    If($AdminKeyPWDCurrent -eq $AdminPWDNew)
+        {
+        
+       
+        Write-EventLog -LogName "Dell BIOS" -EventId 01 -EntryType Information -Source "BIOS Password Manager" -Message "The status of the BIOS AdminPWD has been checked and is unchanged."
+        
+
+        }
+
+    Else
+        {
+
+
+        Write-Host "Passwort is not equal"
+        $PWstatus = AdminPWD-change -Password $AdminPWDNew -PasswordOld $AdminKeyPWDCurrent
+
+
+            If($PWstatus -eq 0)
+                {
+
+                # report success to MS Event Viewer
+                Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
+
+                <#  0 {$result = "Success"}
+                    1 {$result = "Failed"}
+                    2 {$result = "Invalid Parameter"}
+                    3 {$result = 'Access Denied'}
+                    4 {$result = 'Not Supported'}
+                    5 {$result = 'Memory Error'}
+                    6 {$result = 'Protocol Error'} #>
+
+                write-KeyVaultPWD -Password $AdminPWDNew
+
+                }
+            Else
+                {
+
+                # report Error Code to MS Event Viewer
+                Write-EventLog -LogName "Dell BIOS" -EventId 11 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
+
+                }
+
+        }
+
+
+    }
