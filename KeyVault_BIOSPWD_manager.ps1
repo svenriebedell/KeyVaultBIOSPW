@@ -71,7 +71,7 @@ $KeyVaultPreShared = "0-PreSharedKey"
 #############################################################################
 
 # Value true the password generator generate a randomize password
-$PasswordBackup = $false #$True/$False
+$PasswordBackup = $true #$True/$False
 
 
 #############################################################################
