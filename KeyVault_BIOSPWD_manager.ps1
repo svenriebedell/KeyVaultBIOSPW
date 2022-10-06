@@ -52,19 +52,6 @@ $ApplicationId = '9bd11b68-222e-4a0f-941a-a12345c3957d'
 $Secret = 'GZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
 
 #############################################################################
-# device informations                                                       #
-#############################################################################
-
-$DeviceName = (Get-CimInstance -ClassName Win32_ComputerSystem).Name
-$serviceTag = (Get-CimInstance -ClassName Win32_BIOS).SerialNumber
-
-
-#############################################################################
-# Environment Variables                                                     #
-#############################################################################
-$Date = Get-Date
-
-#############################################################################
 # Option Randmized PWD Function                                             #
 #############################################################################
 
@@ -79,6 +66,26 @@ $PWLength = 8 # lenght of your randomized Password
 #Name of the Secret in KeyVault which incl. the Static Part of BIOS PWD
 $KeyVaultPreShared = "0-PreSharedKey"
 
+#############################################################################
+# Store local copy of Password in Registry                                  #
+#############################################################################
+
+# Value true the password generator generate a randomize password
+$PasswordBackup = $false #$True/$False
+
+
+#############################################################################
+# device informations                                                       #
+#############################################################################
+
+$DeviceName = (Get-CimInstance -ClassName Win32_ComputerSystem).Name
+$serviceTag = (Get-CimInstance -ClassName Win32_BIOS).SerialNumber
+
+#############################################################################
+# Environment Variables                                                     #
+#############################################################################
+$Date = Get-Date
+
 ############################################################################
 # required versions for PowerShell Modules                                 #
 ############################################################################
@@ -86,7 +93,6 @@ $KeyVaultPreShared = "0-PreSharedKey"
 [Version]$PowerShellGetVersion = "2.2.5"
 [Version]$AzKeyVaultVersion = "4.7.0"
 [Version]$AzAccountsVersion = "2.10.1"
-
 
 #############################################################################
 #############################################################################
@@ -532,9 +538,21 @@ if ($PWset[0] -eq 0)
 
         $AdminPWDNew = $serviceTag+$AdminPreSharedKeyPWD
 
+        If($PasswordBackup -eq $true)
+            {
+            
+            $RegKeyExist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
 
-        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
+            If($RegKeyExist -eq $false)
+                {
 
+                New-Item -path "hklm:\software\Dell\BIOS" -Force
+
+                }
+
+            New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $AdminPWDNew -type string -Force
+
+            }
 
 
         }
@@ -544,7 +562,21 @@ if ($PWset[0] -eq 0)
 
         $AdminPWDNew = New-Password
 
-        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
+        If($PasswordBackup -eq $true)
+            {
+            
+            $RegKeyExist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
+
+            If($RegKeyExist -eq $false)
+                {
+
+                New-Item -path "hklm:\software\Dell\BIOS" -Force
+
+                }
+
+            New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $AdminPWDNew -type string -Force
+
+            }
 
 
         }
@@ -602,7 +634,21 @@ Else
         # generate new BIOS AdminPWD
         $AdminPWDNew = $serviceTag+$AdminKeyPWDPreShared
 
-        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
+        If($PasswordBackup -eq $true)
+            {
+            
+            $RegKeyExist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
+
+            If($RegKeyExist -eq $false)
+                {
+
+                New-Item -path "hklm:\software\Dell\BIOS" -Force
+
+                }
+
+            New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $AdminPWDNew -type string -Force
+
+            }
 
         }
     Else
@@ -612,7 +658,21 @@ Else
         
         $AdminPWDNew = New-Password
 
-        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
+        If($PasswordBackup -eq $true)
+            {
+            
+            $RegKeyExist = Test-Path 'HKLM:\SOFTWARE\Dell\BIOS'
+
+            If($RegKeyExist -eq $false)
+                {
+
+                New-Item -path "hklm:\software\Dell\BIOS" -Force
+
+                }
+
+            New-Itemproperty -path "hklm:\software\Dell\BIOS" -name "BIOS" -value $AdminPWDNew -type string -Force
+
+            }
 
 
         }
