@@ -69,7 +69,7 @@ $Date = Get-Date
 #############################################################################
 
 # Value true the password generator generate a randomize password
-$PasswordGenerator = $False #$True/$False
+$PasswordGenerator = $false #$True/$False
 $PWLength = 8 # lenght of your randomized Password
 
 ####################################################################################
@@ -256,12 +256,13 @@ Function write-KeyVaultPWD
     Param
         (
 
-        [string]$Password
+        [string]$Password,
+        [string]$KeyName
 
         )
 
     $securevalue = ConvertTo-SecureString $Password -AsPlainText -Force
-    $secret =  Set-AzKeyVaultSecret -VaultName "pwdbios" -Name $DeviceName -SecretValue $securevalue
+    $secret =  Set-AzKeyVaultSecret -VaultName "pwdbios" -Name $KeyName -SecretValue $securevalue
 
     }
 
@@ -309,7 +310,7 @@ function AdminPWD-setnew
 
     # Set AdminPW and get result
     $PWstatus = $SecurityInterface.SetNewPassword(0,0,0,"Admin","",$Password) | Select-Object -ExpandProperty Status
-
+    
     Switch ($PWstatus)
         {
 
@@ -352,7 +353,7 @@ function AdminPWD-change
     $Encoder = New-Object System.Text.UTF8Encoding
     $Bytes = $Encoder.GetBytes($PasswordOld)
 
-    $PWstatus = $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$Password,$PasswordOld) | Select-Object -ExpandProperty Status
+    $PWstatus = $SecurityInterface.SetNewPassword(1,$Bytes.Length,$Bytes,"Admin",$PasswordOld,$Password) | Select-Object -ExpandProperty Status
     
     Switch ($PWstatus)
         {
@@ -531,12 +532,19 @@ if ($PWset[0] -eq 0)
 
         $AdminPWDNew = $serviceTag+$AdminPreSharedKeyPWD
 
+
+        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
+
+
+
         }
     Else
         {
 
 
         $AdminPWDNew = New-Password
+
+        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
 
 
         }
@@ -551,7 +559,7 @@ if ($PWset[0] -eq 0)
         {
 
         # report success to MS Event Viewer
-        Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
+        Write-EventLog -LogName "Dell BIOS" -EventId 02 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
 
         <#  0 {$result = "Success"}
             1 {$result = "Failed"}
@@ -561,7 +569,7 @@ if ($PWset[0] -eq 0)
             5 {$result = 'Memory Error'}
             6 {$result = 'Protocol Error'} #>
 
-        write-KeyVaultPWD -Password $AdminPWDNew
+        write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
 
         }
     Else
@@ -590,18 +598,21 @@ Else
         Connect-KeyVaultPWD
         $AdminKeyPWDCurrent = get-KeyVaultPWD -KeyName $DeviceName
         $AdminKeyPWDPreShared = get-KeyVaultPWD -KeyName $KeyVaultPreShared
-        Disconnect-AzAccount
-
+        
+        # generate new BIOS AdminPWD
         $AdminPWDNew = $serviceTag+$AdminKeyPWDPreShared
+
+        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
 
         }
     Else
         {
         Connect-KeyVaultPWD
         $AdminKeyPWDCurrent = get-KeyVaultPWD -KeyName $DeviceName
-        Disconnect-AzAccount
-
+        
         $AdminPWDNew = New-Password
+
+        $AdminPWDNew | Out-File -FilePath C:\Temp\BIOSPWD.txt -Append ##only temp
 
 
         }
@@ -613,6 +624,7 @@ Else
        
         Write-EventLog -LogName "Dell BIOS" -EventId 01 -EntryType Information -Source "BIOS Password Manager" -Message "The status of the BIOS AdminPWD has been checked and is unchanged."
         
+        Disconnect-AzAccount
 
         }
 
@@ -620,15 +632,14 @@ Else
         {
 
 
-        Write-Host "Passwort is not equal"
         $PWstatus = AdminPWD-change -Password $AdminPWDNew -PasswordOld $AdminKeyPWDCurrent
 
 
-            If($PWstatus -eq 0)
+            If($PWstatus[0] -eq 0)
                 {
 
                 # report success to MS Event Viewer
-                Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
+                Write-EventLog -LogName "Dell BIOS" -EventId 02 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is changed on Device $DeviceName"
 
                 <#  0 {$result = "Success"}
                     1 {$result = "Failed"}
@@ -638,7 +649,7 @@ Else
                     5 {$result = 'Memory Error'}
                     6 {$result = 'Protocol Error'} #>
 
-                write-KeyVaultPWD -Password $AdminPWDNew
+                write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
 
                 }
             Else
@@ -649,6 +660,7 @@ Else
 
                 }
 
+        Disconnect-AzAccount
         }
 
 
