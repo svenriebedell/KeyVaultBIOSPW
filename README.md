@@ -42,6 +42,8 @@ There some fields you need **to edit before you start!!!**
 
 ![image](https://user-images.githubusercontent.com/99394991/194842244-09f06945-5077-4d78-ae40-29b52b36a751.png)
 
+
+
 **************************************************************************************
 
 ### The PowerShell offers you **two** kinds of password options:
@@ -52,6 +54,7 @@ There some fields you need **to edit before you start!!!**
 
 you need to edited the name of you PreshardKey. It should be the same like in Microsoft Key Vault service.
 
+
 #### $KeyVaultPreShared
 
 ![image](https://user-images.githubusercontent.com/99394991/194842056-158f82c1-867d-48a7-b1e1-ea4aca42f3fe.png)
@@ -60,11 +63,24 @@ you need to edited the name of you PreshardKey. It should be the same like in Mi
 ![image](https://user-images.githubusercontent.com/99394991/194842075-c8b58f95-3e11-44d7-b5c9-1ede5ecbeb54.png)
 
 
+
+
+
 #### Randomized Option (option)
 
 You need to enable this service first otherwise the password is used as PreSharedKey option
 
 - **$PasswordGenerator** status is $false and could change to $true, if $true the script using a randomized password.
-- **PWLength** is lenght of the randomized passwort choose a value between 1 - 32 (max. 32 characters)
+- **$PWLength** is lenght of the randomized passwort choose a value between 1 - 32 (max. 32 characters)
 
 ![image](https://user-images.githubusercontent.com/99394991/194842166-e140fca3-f459-4370-ad4f-ded975c0db8f.png)
+
+
+## Troubleshouting and logging
+
+The PowerShell creating messages in Microsoft Event for Monitoring and troubleshouting
+
+- Event ID 20 - 22 for WMI BIOS Settings (20 - Error / 21 - Infomation / 22 - Success)
+- Event ID 30 - 32 for Key Vault Events (30 - Error / 31 - Infomation / 32 - Success)
+- Event ID 40 - 22 for PowerShell Modules (40 - Error / 41 - Infomation / 42 - Success)
+
