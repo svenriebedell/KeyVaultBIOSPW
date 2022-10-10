@@ -25,6 +25,10 @@ There some fields you need **to edit before you start!!!**
 **$Tenant** is the Microsoft Azure Tenant-ID of your Environment
 **$Application** is your self created authentification Application-ID in Azure Service. Setup of Key Vault you will find below if needed.
 **$Secret** is your client secret value form authentification Application
+![image](https://user-images.githubusercontent.com/99394991/194841985-82b59f0b-ffba-42bc-b323-2fed473e7a08.png)
+![image](https://user-images.githubusercontent.com/99394991/194842703-d7be07d5-ef69-4408-aa33-51fc21484c24.png)
+![image](https://user-images.githubusercontent.com/99394991/194842244-09f06945-5077-4d78-ae40-29b52b36a751.png)
+![image](https://user-images.githubusercontent.com/99394991/194842507-ba792d34-c2a3-4b98-bdd2-051e487861c7.png)
 
 
 The PowerShell offers you **two** kinds of password options:
@@ -35,8 +39,8 @@ The PowerShell offers you **two** kinds of password options:
 
 you need to edited the name of you PreshardKey. It should be the same like in Microsoft Key Vault service.
 
-
-
+![image](https://user-images.githubusercontent.com/99394991/194842056-158f82c1-867d-48a7-b1e1-ea4aca42f3fe.png)
+![image](https://user-images.githubusercontent.com/99394991/194842075-c8b58f95-3e11-44d7-b5c9-1ede5ecbeb54.png)
 
 
 #### Randomized Option (option)
@@ -45,3 +49,7 @@ You need to enable this service first otherwise the password is used as PreShare
 
 **$PasswordGenerator** status is $false and could change to $true, if $true the script using a randomized password.
 **PWLength** is lenght of the randomized passwort choose a value between 1 - 32 (max. 32 characters)
+
+![image](https://user-images.githubusercontent.com/99394991/194842166-e140fca3-f459-4370-ad4f-ded975c0db8f.png)
+
+
