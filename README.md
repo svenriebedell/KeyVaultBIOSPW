@@ -90,3 +90,13 @@ The PowerShell creating messages in Microsoft Event for Monitoring and troublesh
 - Event ID 40 - 22 for PowerShell Modules (40 - Error / 41 - Infomation / 42 - Success)
 
 ![image](https://user-images.githubusercontent.com/99394991/194856718-af44b342-1113-48ba-a214-63dba1bfa098.png)
+
+
+****************************************
+
+## Setup Key Vault Environment
+
+If you have not in place yet we need a configured Key Vault Service and a registerd applications for authentification between client and Key Vault Service.
+You can choose between different authentification types like Certificates, Client secrets and Federanted credentials. I choose the option client secrets for my scripts whichs allows me to run the script everywhere without to deploy any certificates on the client, for my example it makes the deployment and setup much easier.
+
+image.png
