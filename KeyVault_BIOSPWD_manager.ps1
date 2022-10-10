@@ -1,7 +1,7 @@
 <#
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
-_version_ = 1.0.0
+_version_ = 1.0.1
 _Dev_Status_ = Test
 Copyright Â© 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
@@ -21,17 +21,19 @@ limitations under the License.
 <#Version Changes
 
 1.0.0    inital version
+1.0.1    Check PWD is writen to KeyVault before writting PWD on the machine
 
 #>
 
 <#
 .Synopsis
-   This PowerShell is for remediation by MS Endpoint Manager. This script will set a BIOS AdminPW on a Dell machine by using WMI.
-   IMPORTANT: WMI BIOS is supported only on devices which developt after 2018, older devices does not supported by this powershell
+   This PowerShell sets or changes the Dell BIOS AdminPWD on devices where it is executed. It checks in Microsoft KeyVault if there is another AdminPWD for the device and changes it if one is already set on the device. Passwords are automatically stored in Microsoft KeyVault. Password options are Random or a combination of PreSharedKey (from Microsoft KeyVault and device ServiceTag.
+   IMPORTANT: WMI BIOS is supported only on Dell devices which developt after 2018, older devices does not supported by this powershell
    IMPORTANT: This script does not reboot the system to apply or query system.
+   IMPORTANT: Microsoft KeyVault Environment with Client Secure option is needed.
 .DESCRIPTION
-   Powershell using WMI for setting AdminPW on the machine. The script checking if any PW is exist and can setup new and change PW. 
-   This Script need to be imported in Reports/Endpoint Analytics/Proactive remediation. This File is for remediation only and need a seperate script for detection additional.
+   The PowerShell uses WMI to set or change the Dell BIOS AdminPWD. Newly generated BIOS AdminPWD are stored in Microsoft KeyVault. Authentication is done via Client Secure Azure connection.
+   This script can be used for automation purposes in Microsoft Endpoint Manager asRemediation or in other solutions such as SCCM, VMware WorkspaceOne, etc.
    
 #>
 
@@ -141,14 +143,14 @@ Function Check-Module
         If($null-eq $ModuleCheck)
             {
 
-            Write-EventLog -LogName "Dell BIOS" -EventId 11 -EntryType Error -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName failed to install"
+            Write-EventLog -LogName "Dell BIOS" -EventId 40 -EntryType Error -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName failed to install"
 
             }
 
         Else
             {
 
-            Write-EventLog -LogName "Dell BIOS" -EventId 00 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is successfull installed"
+            Write-EventLog -LogName "Dell BIOS" -EventId 42 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is successfull installed"
 
             }
         }
@@ -180,7 +182,7 @@ Function Check-Module
             If($null-eq $ModuleCheck)
                 {
 
-                Write-EventLog -LogName "Dell BIOS" -EventId 11 -EntryType Error -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName failed to install"
+                Write-EventLog -LogName "Dell BIOS" -EventId 40 -EntryType Error -Source "BIOS Password Manager" -Message "Error: Powershell Module $ModuleName failed to install"
 
                 }
 
@@ -188,7 +190,7 @@ Function Check-Module
                 {
 
                 $AttributStringValue = "is installed"
-                Write-EventLog -LogName "Dell BIOS" -EventId 00 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is successfull installed"
+                Write-EventLog -LogName "Dell BIOS" -EventId 42 -EntryType SuccessAudit -Source "BIOS Password Manager" -Message "Success: Powershell Module $ModuleName is successfull installed"
 
                 }
 
@@ -198,7 +200,7 @@ Function Check-Module
         Else
             {
 
-            Write-EventLog -LogName "Dell BIOS" -EventId 01 -EntryType Information -Source "BIOS Password Manager" -Message "Powershell Module $ModuleName is still existing"
+            Write-EventLog -LogName "Dell BIOS" -EventId 41 -EntryType Information -Source "BIOS Password Manager" -Message "Information: Powershell Module $ModuleName is still existing"
 
             }
         }
@@ -272,6 +274,46 @@ Function write-KeyVaultPWD
 
     }
 
+
+##################################
+#### Check KeyVault BIOSPWD ####
+##################################
+
+Function Check-KeyVaultPWD
+    {
+
+    Param
+        (
+
+        [string]$KeyName,
+        [string]$Password
+
+        )
+
+    #############################################################################
+    # Check BIOS PWD for Device or PreSharedKey                                 #
+    #############################################################################
+
+    $secret = (Get-AzKeyVaultSecret -vaultName "PWDBIOS" -name $KeyName) | select *
+    $Get_My_Scret = [System.Runtime.InteropServices.Marshal]::SecureStringToBSTR($secret.SecretValue) 
+    $KeyPWD = [System.Runtime.InteropServices.Marshal]::PtrToStringAuto($Get_My_Scret)
+    
+    If($KeyPWD -eq $Password)
+        {
+        
+        $KeyCheck = $true
+                
+        }
+    Else
+        {
+
+        $KeyCheck = $false
+        
+        }       
+           
+    Return $KeyCheck   
+
+    }
 
 ############################
 #### Password set check ####
@@ -521,7 +563,7 @@ if ($PWset[0] -eq 0)
     {
     
     #Report missing BIOS AdminPWD
-    Write-EventLog -LogName "Dell BIOS" -EventId 00 -Source "BIOS Password Manager" -EntryType Error -Message "Error: Device $DeviceName has no AdminPWD"
+    Write-EventLog -LogName "Dell BIOS" -EventId 20 -Source "BIOS Password Manager" -EntryType Error -Message "Error: Device $DeviceName has no BIOS AdminPWD"
 
     ##############################################
     #### Setup BIOS AdminPWD                  ####
@@ -581,34 +623,54 @@ if ($PWset[0] -eq 0)
 
         }
 
-    # Set AdminPWD to Device and return setup result
-    $PWstatus = AdminPWD-setnew -Password $AdminPWDNew
+    ##################################################
+    #### write and control PWD write in Key Vault ####
+    ##################################################
 
-        
+    write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
+    $KeyVaultCheck = Check-KeyVaultPWD -KeyName $DeviceName -Password $AdminPWDNew
 
-        
-    If($PWstatus[0] -eq 0)
+    If($KeyVaultCheck -eq $true)
         {
-
+        
         # report success to MS Event Viewer
-        Write-EventLog -LogName "Dell BIOS" -EventId 02 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is set on Device $DeviceName"
+        Write-EventLog -LogName "Dell BIOS" -EventId 32 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: BIOS AdminPWD stored correctly in KeyVault for Key $DeviceName"
 
-        <#  0 {$result = "Success"}
-            1 {$result = "Failed"}
-            2 {$result = "Invalid Parameter"}
-            3 {$result = 'Access Denied'}
-            4 {$result = 'Not Supported'}
-            5 {$result = 'Memory Error'}
-            6 {$result = 'Protocol Error'} #>
+        ########################################################
+        #### Set AdminPWD to Device and return setup result ####
+        ########################################################    
+        $PWstatus = AdminPWD-setnew -Password $AdminPWDNew
+                      
+        If($PWstatus[0] -eq 0)
+            {
 
-        write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
 
+            # report success to MS Event Viewer
+            Write-EventLog -LogName "Dell BIOS" -EventId 22 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD for is set on Device $DeviceName"
+
+            <#  0 {$result = "Success"}
+                1 {$result = "Failed"}
+                2 {$result = "Invalid Parameter"}
+                3 {$result = 'Access Denied'}
+                4 {$result = 'Not Supported'}
+                5 {$result = 'Memory Error'}
+                6 {$result = 'Protocol Error'} #>
+        
+
+            }
+        Else
+            {
+
+            # report Error Code to MS Event Viewer
+            Write-EventLog -LogName "Dell BIOS" -EventId 20 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
+
+            }
         }
     Else
         {
 
-        # report Error Code to MS Event Viewer
-        Write-EventLog -LogName "Dell BIOS" -EventId 11 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
+        # report Error to MS Event Viewer
+        Write-EventLog -LogName "Dell BIOS" -EventId 30 -Source "BIOS Password Manager" -EntryType Error -Message "Error: BIOS AdminPWD is not stored correctly in KeyVault for Key $DeviceName. Wrong AdminPWD or connection problem"
 
         }
 
@@ -682,7 +744,7 @@ Else
         {
         
        
-        Write-EventLog -LogName "Dell BIOS" -EventId 01 -EntryType Information -Source "BIOS Password Manager" -Message "The status of the BIOS AdminPWD has been checked and is unchanged."
+        Write-EventLog -LogName "Dell BIOS" -EventId 31 -EntryType Information -Source "BIOS Password Manager" -Message "Information: KeyVault Key for $DeviceName and new generated AdminPWD are the same. AdminPWD on Device $DeviceName is unchanged"
         
         Disconnect-AzAccount
 
@@ -691,15 +753,29 @@ Else
     Else
         {
 
+        ##################################################
+        #### write and control PWD write in Key Vault ####
+        ##################################################
 
-        $PWstatus = AdminPWD-change -Password $AdminPWDNew -PasswordOld $AdminKeyPWDCurrent
+        write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
+        $KeyVaultCheck = Check-KeyVaultPWD -KeyName $DeviceName -Password $AdminPWDNew
 
+        If($KeyVaultCheck -eq $true)
+            {
+        
+            # report success to MS Event Viewer
+            Write-EventLog -LogName "Dell BIOS" -EventId 32 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: BIOS AdminPWD stored correctly in KeyVault for Key $DeviceName"
+
+            ###########################################################
+            #### Change AdminPWD on Device and return setup result ####
+            ###########################################################   
+            $PWstatus = AdminPWD-change -Password $AdminPWDNew -PasswordOld $AdminKeyPWDCurrent
 
             If($PWstatus[0] -eq 0)
                 {
 
                 # report success to MS Event Viewer
-                Write-EventLog -LogName "Dell BIOS" -EventId 02 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is changed on Device $DeviceName"
+                Write-EventLog -LogName "Dell BIOS" -EventId 22 -Source "BIOS Password Manager" -EntryType SuccessAudit -Message "Success: AdminPWD is changed on Device $DeviceName"
 
                 <#  0 {$result = "Success"}
                     1 {$result = "Failed"}
@@ -709,16 +785,23 @@ Else
                     5 {$result = 'Memory Error'}
                     6 {$result = 'Protocol Error'} #>
 
-                write-KeyVaultPWD -Password $AdminPWDNew -KeyName $DeviceName
-
                 }
             Else
                 {
 
                 # report Error Code to MS Event Viewer
-                Write-EventLog -LogName "Dell BIOS" -EventId 11 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
+                Write-EventLog -LogName "Dell BIOS" -EventId 20 -Source "BIOS Password Manager" -EntryType Error -Message "Error: AdminPWD is not set correctly on Device $DeviceName Error-Code: $PWstatus"
 
                 }
+
+            }
+        Else
+            {
+
+                # report Error to MS Event Viewer
+                Write-EventLog -LogName "Dell BIOS" -EventId 30 -Source "BIOS Password Manager" -EntryType Error -Message "Error: BIOS AdminPWD is not stored correctly in KeyVault for Key $DeviceName. Wrong AdminPWD or connection problem"
+
+            }
 
         Disconnect-AzAccount
         }
