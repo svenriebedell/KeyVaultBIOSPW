@@ -42,6 +42,8 @@ There some fields you need **to edit before you start!!!**
 
 ![image](https://user-images.githubusercontent.com/99394991/194842244-09f06945-5077-4d78-ae40-29b52b36a751.png)
 
+**************************************************************************************
+
 ### The PowerShell offers you **two** kinds of password options:
 - PreSharedKey+ServiceTag (PreSharedKey cames from Microsoft Key Vault)
 - full randomized password
