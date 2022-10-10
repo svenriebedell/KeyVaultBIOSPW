@@ -76,6 +76,7 @@ You need to enable this service first otherwise the password is used as PreShare
 ![image](https://user-images.githubusercontent.com/99394991/194842166-e140fca3-f459-4370-ad4f-ded975c0db8f.png)
 
 
+****************************************
 ## Troubleshouting and logging
 
 The PowerShell creating messages in Microsoft Event for Monitoring and troubleshouting
@@ -84,3 +85,4 @@ The PowerShell creating messages in Microsoft Event for Monitoring and troublesh
 - Event ID 30 - 32 for Key Vault Events (30 - Error / 31 - Infomation / 32 - Success)
 - Event ID 40 - 22 for PowerShell Modules (40 - Error / 41 - Infomation / 42 - Success)
 
+![image](https://user-images.githubusercontent.com/99394991/194856718-af44b342-1113-48ba-a214-63dba1bfa098.png)
