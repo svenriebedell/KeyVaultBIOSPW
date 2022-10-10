@@ -22,14 +22,22 @@ This project shows how to set and change a Dell BIOS Admin password using Micros
 
 There some fields you need **to edit before you start!!!**
 
-**$Tenant** is the Microsoft Azure Tenant-ID of your Environment
-**$Application** is your self created authentification Application-ID in Azure Service. Setup of Key Vault you will find below if needed.
-**$Secret** is your client secret value form authentification Application
+- **$Tenant** is the Microsoft Azure Tenant-ID of your Environment
+- **$Application** is your self created authentification Application-ID in Azure Service. Setup of Key Vault you will find below if needed.
+- **$Secret** is your client secret value form authentification Application
+
+*PowerShell:*
 ![image](https://user-images.githubusercontent.com/99394991/194841985-82b59f0b-ffba-42bc-b323-2fed473e7a08.png)
+
+
+*$Tenant*
 ![image](https://user-images.githubusercontent.com/99394991/194842703-d7be07d5-ef69-4408-aa33-51fc21484c24.png)
-![image](https://user-images.githubusercontent.com/99394991/194842244-09f06945-5077-4d78-ae40-29b52b36a751.png)
+
+*$Application*
 ![image](https://user-images.githubusercontent.com/99394991/194842507-ba792d34-c2a3-4b98-bdd2-051e487861c7.png)
 
+*$Secret*
+![image](https://user-images.githubusercontent.com/99394991/194842244-09f06945-5077-4d78-ae40-29b52b36a751.png)
 
 The PowerShell offers you **two** kinds of password options:
 - PreSharedKey+ServiceTag (PreSharedKey cames from Microsoft Key Vault)
