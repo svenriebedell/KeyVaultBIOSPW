@@ -15,6 +15,7 @@ This project shows how to set and change a Dell BIOS Admin password using Micros
 ### Requirements:
 - Microsoft Azure Service
 - Microsoft Key Vault Service
+  Setup: https://learn.microsoft.com/en-us/azure/key-vault/general/quick-create-portal
 - Dell Business Devices should not be older than 2018 (otherwise BIOS WMI is not supported on this machines)
 
 ### Configuration Options for PowerShell
