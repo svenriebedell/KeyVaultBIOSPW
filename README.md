@@ -108,8 +108,14 @@ You can choose between different authentification types like Certificates, Clien
 Login: portal.azure.com
 Search for 'Key vaults' and start service
 
+![image](https://user-images.githubusercontent.com/99394991/195051856-8a704efa-0066-40d0-9903-7fa81462269d.png)
+
 If you have no Key vaults Container you need setup one first.
 Click 'Create'
+
+![image](https://user-images.githubusercontent.com/99394991/195051916-ef1eb9c9-e892-4159-880d-3e7d5c114e2c.png)
+
+
 
 Fill out mandetory fields:
 - Resource group
@@ -117,8 +123,14 @@ Fill out mandetory fields:
 - Region
 - Pricing tier (Standard is fine)
 
+Click 'Review + create
+
+![image](https://user-images.githubusercontent.com/99394991/195052207-56f28dec-3d25-4b97-9a3d-069082be153b.png)
+
+
 *Now* we have created the Key vault Container where we store the BIOS password later.
 
+![image](https://user-images.githubusercontent.com/99394991/195052250-2cf3498c-d53d-4f75-882b-a7b3fe0b4338.png)
 
 
 ### Setup Azure App for Authentification
@@ -127,14 +139,22 @@ Fill out mandetory fields:
 Login: portal.azure.com
 Search for 'App registrations' and start service
 
+![image](https://user-images.githubusercontent.com/99394991/195052304-3f12c2b8-9e92-45ab-af15-3a00d9d18016.png)
+
 
 Click 'New registration'
+
+![image](https://user-images.githubusercontent.com/99394991/195052348-173daf9d-855c-49cb-916c-3ed2f2e2d7fe.png)
+
 
 Fill out mandetory fields:
 - Name e.g. BIOS_PWD
 Supported account types select based on your environment e.g. Single tenant
 
 Click 'Register'
+
+![image](https://user-images.githubusercontent.com/99394991/195052420-d6cddf6d-7247-42da-b256-db50b8662f9c.png)
+
 
 
 ### Generate a Certificate
