@@ -94,7 +94,7 @@ The PowerShell creating messages in Microsoft Event for Monitoring and troublesh
 
 ****************************************
 
-## Setup Key Vault Environment
+# Setup Key Vault Environment
 
 If you have not in place yet we need a configured Key Vault Service and a registerd applications for authentification between client and Key Vault Service.
 You can choose between different authentification types like Certificates, Client secrets and Federanted credentials. I choose the option client secrets for my scripts whichs allows me to run the script everywhere without to deploy any certificates on the client, for my example it makes the deployment and setup much easier.
@@ -104,7 +104,58 @@ You can choose between different authentification types like Certificates, Clien
 
 ### Setup Microsoft Key Vault
 
+**Prepare**
 Login: portal.azure.com
+Search for 'Key vaults' and start service
 
-Search for Key vaults Service and start service
+If you have no Key vaults Container you need setup one first.
+Click 'Create'
+
+Fill out mandetory fields:
+- Resource group
+- Key vault name e.g. PWDBIOS
+- Region
+- Pricing tier (Standard is fine)
+
+*Now* we have created the Key vault Container where we store the BIOS password later.
+
+
+
+### Setup Azure App for Authentification
+
+**Prepare**
+Login: portal.azure.com
+Search for 'App registrations' and start service
+
+
+Click 'New registration'
+
+Fill out mandetory fields:
+- Name e.g. BIOS_PWD
+Supported account types select based on your environment e.g. Single tenant
+
+Click 'Register'
+
+
+### Generate a Certificate
+
+We need generate a certificate for trust relationship between Azure App and Key vaults. If you have a certificate authority service you can use this or take a admin workstation an creating a new personal one.
+
+*Script*:
+New-SelfSignedCertificate -DnsName "KeyVault_Cert" -CertStoreLocation Cert:\currentuser\My
+$KeyCert = Get-ChildItem -Path "cert:\CurrentUser\My" | Where-Object {$_.Subject -match "KeyVault_Cert"}
+$KeyCertThumbprint = $KeyCert.Thumbprint
+Export-Certificate -Cert "Cert:\CurrentUser\My\$KeyCertThumbprint" -FilePath C:\KeyVault_Cert.cer
+
+
+### Import Certificate to Azure App for Authentification
+
+
+
+
+
+
+
+
+
 
