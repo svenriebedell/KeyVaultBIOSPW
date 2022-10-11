@@ -166,11 +166,16 @@ Click 'Register'
 go to your Azure App for Authentication
 Click 'Certificates & secrets'
 
+![image](https://user-images.githubusercontent.com/99394991/195064455-4fdc4dd7-1ae7-478e-9552-640a852478a3.png)
 
 
 
 Click 'Client secrets'
 Click 'New client secret'
+
+![image](https://user-images.githubusercontent.com/99394991/195064504-d966fa97-8891-4c14-b2e0-ae8d84f2e2cd.png)
+
+
 
 
 fill out mandetory fields:
@@ -180,12 +185,16 @@ fill out mandetory fields:
 
 Click 'Add'
 
+![image](https://user-images.githubusercontent.com/99394991/195064543-121c3e63-4b09-40f2-826f-2d57b977b1db.png)
 
 
-Now you have a credential you can use with your version of the BIOS Password PowerShell script
+
+
+Now you have a credential which you can use with your version of the BIOS Password PowerShell script
 
 **Important: The Value field is only viewable one time so please copy this information and save it on a secure place**
 
+![image](https://user-images.githubusercontent.com/99394991/195064727-94a0eb14-aef6-4750-8cc5-7fadf96512d7.png)
 
 
 
@@ -194,21 +203,31 @@ Now you have a credential you can use with your version of the BIOS Password Pow
 go to your Key vaults container
 Click 'Access policies'
 
+![image](https://user-images.githubusercontent.com/99394991/195064763-4e1f6beb-f2ef-4bb1-85be-86d591b3c646.png)
+
 
 
 Click 'Create'
+
+![image](https://user-images.githubusercontent.com/99394991/195064791-e876296c-c1cd-44c4-8273-413a85f986fa.png)
+
+
 
 
 Section '**Secret permissions**'
 Select **ONLY** get, set
 Click 'Next'
 
+![image](https://user-images.githubusercontent.com/99394991/195064904-59899c50-4a1a-4349-a55f-bbbedc33223b.png)
 
 
 
 Search for your Azure App
 Select this App
 Click 'Next' twice
+
+![image](https://user-images.githubusercontent.com/99394991/195064968-421a21dc-7c93-4eba-834d-eedbb41554e2.png)
+
 
 
 
@@ -218,22 +237,14 @@ Click 'Create'
 
 Ready.
 
+![image](https://user-images.githubusercontent.com/99394991/195065067-ce7ab7e5-9dd5-452d-9d18-31f4bcea2193.png)
+
 
 
 Now please fill out the information in the PowerShell script (Informations you will find top of this Readme)
 
 
 The script could be now use by Taskplaner or MEM Remediation, etc.
-
-
-
-
-
-
-
-
-
-
 
 
 
