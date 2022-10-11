@@ -105,8 +105,8 @@ You can choose between different authentification types like Certificates, Clien
 ### Setup Microsoft Key Vault
 
 **Prepare**
-Login: portal.azure.com
-Search for 'Key vaults' and start service
+Login: **portal.azure.com**
+Search for '**Key vaults**' and start service
 
 ![image](https://user-images.githubusercontent.com/99394991/195051856-8a704efa-0066-40d0-9903-7fa81462269d.png)
 
@@ -136,8 +136,8 @@ Click 'Review + create
 ### Setup Azure App for Authentification
 
 **Prepare**
-Login: portal.azure.com
-Search for 'App registrations' and start service
+Login: **portal.azure.com**
+Search for '**App registrations**' and start service
 
 ![image](https://user-images.githubusercontent.com/99394991/195052304-3f12c2b8-9e92-45ab-af15-3a00d9d18016.png)
 
