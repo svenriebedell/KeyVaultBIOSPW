@@ -49,9 +49,9 @@ limitations under the License.
 #############################################################################
 
 # Tenant, Application-ID and Secure-Value
-$Tenant = '0d02d0b5-802d-427e-abc8-5166348b7f1f'
-$ApplicationId = '9bd11b68-222e-4a0f-941a-a12345c3957d'
-$Secret = 'GZJ8Q~Kz6lC2jCuMhcKi1gnhrRF4Viam7M2nnaYX'
+$Tenant = 'Your Azure tenant ID'
+$ApplicationId = 'Your Azure App for Authentification ID'
+$Secret = 'Your Client Secure Value'
 
 #############################################################################
 # Option Randmized PWD Function                                             #
