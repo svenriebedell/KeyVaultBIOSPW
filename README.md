@@ -161,18 +161,74 @@ Click 'Register'
 
 
 
-### Generate a Certificate
+### Generate a Client Secure for authentification
 
-We need generate a certificate for trust relationship between Azure App and Key vaults. If you have a certificate authority service you can use this or take a admin workstation an creating a new personal one.
-
-*Script*:
-New-SelfSignedCertificate -DnsName "KeyVault_Cert" -CertStoreLocation Cert:\currentuser\My
-$KeyCert = Get-ChildItem -Path "cert:\CurrentUser\My" | Where-Object {$_.Subject -match "KeyVault_Cert"}
-$KeyCertThumbprint = $KeyCert.Thumbprint
-Export-Certificate -Cert "Cert:\CurrentUser\My\$KeyCertThumbprint" -FilePath C:\KeyVault_Cert.cer
+go to your Azure App for Authentication
+Click 'Certificates & secrets'
 
 
-### Import Certificate to Azure App for Authentification
+
+
+Click 'Client secrets'
+Click 'New client secret'
+
+
+fill out mandetory fields:
+
+- Description e.g. BIOSPWD
+- Expires e.g. 6 month or longer depands on you IT-Security
+
+Click 'Add'
+
+
+
+Now you have a credential you can use with your version of the BIOS Password PowerShell script
+
+**Important: The Value field is only viewable one time so please copy this information and save it on a secure place**
+
+
+
+
+### Give Azure App for Authentification read/write rights in Key vaults container
+
+go to your Key vaults container
+Click 'Access policies'
+
+
+
+Click 'Create'
+
+
+Section '**Secret permissions**'
+Select **ONLY** get, set
+Click 'Next'
+
+
+
+
+Search for your Azure App
+Select this App
+Click 'Next' twice
+
+
+
+Click 'Create'
+
+
+
+Ready.
+
+
+
+Now please fill out the information in the PowerShell script (Informations you will find top of this Readme)
+
+
+The script could be now use by Taskplaner or MEM Remediation, etc.
+
+
+
+
+
 
 
 
