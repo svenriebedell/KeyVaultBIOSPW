@@ -17,7 +17,29 @@ This project shows how to set and change a Dell BIOS Admin password using Micros
 - Azure Registered App Authentication  
 - Dell Business Devices should not be older than 2018 (otherwise BIOS WMI is not supported on these machines) 
 
-### Configuration Options for PowerShell
+
+## How it looks
+
+The Password will be stored in Azure Key vaults with different version. This solution registered for each device his own Secret as Name it will be used the Device Name to find the Secret easier.
+
+*Device base secrets*
+
+![image](https://user-images.githubusercontent.com/99394991/195341218-3587fbca-b604-4ab4-8f71-0f0924e968cb.png)
+
+
+*Secret history*
+
+![image](https://user-images.githubusercontent.com/99394991/195341425-f4bb4c6b-1916-4d3d-beac-7979eba8d834.png)
+
+
+*Secret BIOS PWD*
+
+![image](https://user-images.githubusercontent.com/99394991/195341604-ecfce773-3c21-4a40-912e-e076f00e1625.png)
+
+
+****************************************************
+
+## Configuration Options for PowerShell
 
 There are some fields you need **to edit before you start!!!** 
 
