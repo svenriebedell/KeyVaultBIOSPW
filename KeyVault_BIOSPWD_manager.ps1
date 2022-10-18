@@ -2,7 +2,7 @@
 _author_ = Sven Riebe <sven_riebe@Dell.com>
 _twitter_ = @SvenRiebe
 _version_ = 1.0.1
-_Dev_Status_ = Test
+_Dev_Status_ = Testing
 Copyright Â© 2022 Dell Inc. or its subsidiaries. All Rights Reserved.
 
 No implied support and test in test environment/device before using in any production environment.
