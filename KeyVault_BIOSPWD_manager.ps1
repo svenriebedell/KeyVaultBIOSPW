@@ -255,7 +255,7 @@ Function get-KeyVaultPWD
 
 
 ##################################
-#### Request KeyVault BIOSPWD ####
+#### Write KeyVault BIOSPWD ####
 ##################################
 
 Function write-KeyVaultPWD
